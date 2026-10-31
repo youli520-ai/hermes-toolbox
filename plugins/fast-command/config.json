@@ -1,0 +1,62 @@
+{
+ "enabled": true,
+ "dm_only": true,
+ "owner_user_id": "ou_your_open_id",
+ "allowed_chats": [
+  "oc_your_chat_id"
+ ],
+ "high_risk_commands": [],
+ "high_risk_regex": [
+  "删除",
+  "关机",
+  "重启电脑",
+  "关电脑",
+  "rm ",
+  "del ",
+  "drop ",
+  "格式化",
+  "清空",
+  "清除"
+ ],
+ "audit_log": "/opt/data/logs/fast_command_audit.log",
+ "todo_query_words": {
+  "look_prefixes": [
+   "看",
+   "看看",
+   "看一下",
+   "看下",
+   "查",
+   "查看",
+   "查下",
+   "瞄一眼",
+   "瞧一下"
+  ],
+  "num_markers": [
+   "条",
+   "号",
+   "项"
+  ],
+  "ask_suffixes": [
+   "待办",
+   "状态",
+   "进度",
+   "咋样",
+   "怎么样",
+   "情况",
+   "什么",
+   "是什么"
+  ],
+  "ask_sub_suffixes": [
+   "状态",
+   "进度",
+   "情况"
+  ]
+ },
+ "fast_script_allow": [
+  "查天气",
+  "看待办",
+  "状态面板",
+  "系统速查"
+ ],
+ "fast_timeout": 90
+}

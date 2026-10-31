@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "owner_user_id": "ou_your_open_id",
+  "allowed_senders": [],
+  "local_platforms": [
+    "tui",
+    "cli",
+    "desktop",
+    "local",
+    "api_server"
+  ],
+  "dm_only": false,
+  "delta_path": "/opt/data/state/env_delta.json",
+  "max_age_min": 12,
+  "max_len": 400
+}
