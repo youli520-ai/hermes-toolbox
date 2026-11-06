@@ -1,7 +1,7 @@
 ---
 name: disk-space-triage
 description: "Use when 磁盘/存储空间告警或超限。定位占用、分清容器内外可回收项、出待批清理方案。"
-version: 1.8.0
+version: 1.9.1
 author: 星光
 license: private
 metadata:
@@ -9,6 +9,8 @@ metadata:
     tags: [disk, storage, cleanup, triage, 运维]
     category: ops
     change_log:
+      - {ver: "1.9.1", date: "2026-11-02", change: "references/docker-object-audit.md 修订：兜底 cron 改标「未获批、要挂先请示」（主人只批了更新模板方案）；挂本机模板入口 /opt/data/docker_update_ctl.py；验收补判据——prune 后剩余 dangling 先与容器 image ID 映射再定性，在用镜像显示 <none> 是 compose 更新的常态不是漏网"}
+      - {ver: "1.9.0", date: "2026-11-02", change: "新增 references/docker-object-audit.md（宿主侧镜像/卷/构建缓存盘点与清理策略）+ §3 加指针。核心新坑：docker system df 顶层汇总口径虚报——卷汇总 5.14GB(99%可回收) vs df -v 逐卷合计 117MB，报 reclaimable 必须逐项核对；分层策略=镜像可自动清(prune 只删无 tag 无引用)/卷永不自动化/回滚用 tag 表达不作 dangling/更新动作自带 image prune 收尾"}
       - {ver: "1.8.0", date: "2026-10-12", change: "§1 补 `du -x` 与「下钻时仍会跨回别的盘」两条硬判据（本机实测二度踩坑：挂载拓扑已确认、仍把 932G 数据盘上的 21G 音乐/2.9G backups/645M 7z 当成 180G 告警盘的候选报了两轮，被主人一句『你扫出来的都是其他盘的文件』点破）——根因是 `du -sh <父>/*` 默认跨文件系统把子卷整个吞进来；修法：`du -x` 一次性排除所有子卷，并对每个候选单独 `df` 核设备，与告警盘 Filesystem 不同即整项剔除"}
       - {ver: "1.7.0", date: "2026-10-12", change: "references 可回收项清单新增两类与一条判据（/opt/data 顶层整理实战）：①『webui 临时目录与散落报告文档』——webui-*（bubble/docpreview/deck/diag/binprobe/mdimg/shot/v0）一次预览留一个目录 + 根目录几十份 报告-<ts>.docx，零风险但属噪声级（实测 50 项合计仅 4.2 MiB），删前按 §1c 掂量授权成本、汇报必须带量级别让项数像成果；②『顶层旧技能备份包/目录要先查引用』——self-built-skills-backup.tar.gz、hermes_skill_backup/ 可能是修复脚本的回滚源或被 SKILL.md 索引，不默认进零风险档；③『迁移期整包是 backups/ 里最大的一块』——实测三项合计 2.9G 而同目录其余项全是 MB 级，报数时点明它是唯一能让 df 明显动的一项，别与一堆 MB 级清理混说。"}
       - {ver: "1.6.0", date: "2026-10-12", change: "两条实测补强：①§1 新增「同一台 NAS 上多块物理盘并存」及「清理后第一件事复验 df」两条 ⚠️——本机实测系统盘 180G(88% 告警)与数据盘 932G(8%)并存，在数据盘目录 rm 掉 1.578 GiB 探针产物后 df 一个数都没动；判定口径只有 findmnt -T <路径> 的 SOURCE 与 df -h / 同设备同子卷，「路径在容器可见」与「是 /opt/data 子目录」都不算。清理后两个数对不上先停、查归属、照实报「已释放 X 但告警盘水位不变」，不把释放量演成成果。②references 探针产物章补三条：同 MD5 必须逐类算而不能只报一次汇总（note 类 103 份里藏着第 2 个哈希，只报「唯一=1」会漏真差异）；唯一 MD5=1 且大小一致时保留最新 1 批其余可删，并核验保留批次仍在位 + 删除清单落盘 JSON；清完按 *_probe_* 通配会残留 report/其他探针类型/恢复试验件，必须 ls 复核逐项归因，既不漏报也不误删。"}
@@ -153,6 +155,8 @@ find <目录> -type f -newermt "2026-09-01" | wc -l    # 阈值取 4～6 周前�
 | 宿主侧需 root | 卷级快照、副本目录、docker 层、宿主应用数据 | 需 NAS root 通道，且逐项确认语义后才动 |
 
 **每项标大小**，主人按大小决策；只报总数等于让主人重新扫一遍。
+
+宿主侧 Docker 对象（镜像/卷/构建缓存）的盘点命令、汇总口径陷阱与清理安全边界见 `references/docker-object-audit.md`——🔴 报任何 reclaimable 数字前必须逐项核对（实测卷汇总报 5.14GB、逐项合计仅 117MB）。
 
 ## 4. 容器内稳定积累的「可回收」类别
 

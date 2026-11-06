@@ -9,8 +9,8 @@
 ## 1. 判定归属
 
 ```bash
-grep -c '"hermes-agent"' /home/agent/.hermes/skills/.bundled_manifest
-# 命中 = 内置；未命中 = 本地/社区安装
+grep -c '^hermes-agent:' /home/agent/.hermes/skills/.bundled_manifest
+# 命中 = 内置；未命中 = 本地/社区安装。⚠️ 判定后必须用真实内置技能名自验命中>0（2026-11-05 实测：旧写法 grep -c '"名"' 带引号对该文件恒 0=假阴性，文件是 name:md5 裸文本无引号）
 ```
 
 - 只 grep，**不要写 JSON 解析**——`.bundled_manifest` 不是合法 JSON，`json.load` 抛异常
@@ -49,7 +49,7 @@ grep -c '"hermes-agent"' /home/agent/.hermes/skills/.bundled_manifest
 - 内置技能有备案问题但无待办 → 不展示
 - 主人想看内置备案 → `review_check --status --builtin`（只读）
 
-## 6. 与其在机制上的落点
+## 6. 归属分流在机制上的落点
 
 归属判定应修在最上游（collect.py 的 `iter_skill_files` / `detect_skill_changes` 分流），
 **不要**在 `review_check.py` 下游过滤——否则 `--status` 输出的数字与环境便签的数字会对不上，
@@ -77,9 +77,10 @@ grep -c '"hermes-agent"' /home/agent/.hermes/skills/.bundled_manifest
 
 `review_check.py` 定位技能依赖读 **SKILL.md / frontmatter**。**dashboard 型插件**（`~/.hermes/plugins/<名>/dashboard/`，内含 `manifest.json` + `api.py`，**无 SKILL.md、无 plugin.yaml**）因此会两处同时失效：
 
-- 症状：环境便签与 `--status` 都列它为待审查，但 `review_check.py <名>` 与 `plugin:<名>` 三 profile 全报「❌ 技能未找到」——**待审清单清了不、自动项也跑不了**，靠现有工具无法闭环
+- 症状：环境便签与 `--status` 都列它为待审查，但 `review_check.py <名>` 与 `plugin:<名>` 三 profile 全报「❌ 技能未找到」——**待审清单清不掉、自动项也跑不了**，靠现有工具无法闭环
 - **处理**：不必等工具修好，**手工审**（它就是一份执行体），审完手工清 pending
-- **手工清 pending 的具体做法（2026-10-18 实测，2026-10-30 两次修正——⚠️ 机制是两层，缺一即「清了又回来」或「刷了不消失」）**：①真跑一次 `review_check.py <名>` 与 `plugin:<名>`，确认确实是「技能未找到」而非别的问题；②**两层状态都要动**：A. 便签「待审查」的直接来源是 `/opt/data/state/skill_review_state.json` 的 `pending` 键（collect.py `read_pending()` 实读，12:46 实测只刷基线不删此键 → 便签照报）——审完删掉该键；B. `/opt/data/state/skill_scan_state.json` 的 `files` 基线（`{路径:{mtime,md5}}`）是变更检测层——把审过的文件条目刷成当前值（先核对三 profile md5 一致、属同一已审版本，连 profiles 侧一起刷），否则下轮变更检测重挂 pending（「删了又回来」的假象就是这么来的，⚠️ 因此判断「某法无效」前必须确认另一层也动过）；③向 `/opt/data/logs/skill_review.log` 追一行 `[YYYY-MM-DD HH:MM] 手工审查（dashboard 型插件，review_check 无法定位，按 checklist 盲区#17 手工清）` + 逐条结论（如：「无 subprocess/文件写/eval，全部委托 tools.write_approval」）；④收尾跑一遍真实采集（`python3 /opt/data/env_reminder/collect.py` 后 grep 确认该技能不再出现；`--status` 对 dashboard 型本就报未找到，验不出清没清）——**只改 state 不复跑等于没验**。
+- **手工清 pending 的具体做法（2026-10-18 实测，2026-10-30 两次修正——⚠️ 机制是两层，缺一即「清了又回来」或「刷了不消失」）**：①真跑一次 `review_check.py <名>` 与 `plugin:<名>`，确认确实是「技能未找到」而非别的问题；②**两层状态都要动**：前置（2026-11-05 补）：先 cp -p 两个 state 文件带时间戳备份，改完 json.load 验证可解析，备份保留至下次采集成功后再清——基线刷错会静默影响此后所有变更检测，无备份即无回滚。
+A. 便签「待审查」的直接来源是 `/opt/data/state/skill_review_state.json` 的 `pending` 键（collect.py `read_pending()` 实读，12:46 实测只刷基线不删此键 → 便签照报）——审完删掉该键；B. `/opt/data/state/skill_scan_state.json` 的 `files` 基线（`{路径:{mtime,md5}}`）是变更检测层——把审过的文件条目刷成当前值（先核对三 profile md5 一致、属同一已审版本，连 profiles 侧一起刷），否则下轮变更检测重挂 pending（「删了又回来」的假象就是这么来的，⚠️ 因此判断「某法无效」前必须确认另一层也动过）；③向 `/opt/data/logs/skill_review.log` 追一行 `[YYYY-MM-DD HH:MM] 手工审查（dashboard 型插件，review_check 无法定位，按 checklist 盲区#17 手工清）` + 逐条结论（如：「无 subprocess/文件写/eval，全部委托 tools.write_approval」）；④收尾跑一遍真实采集（`python3 /opt/data/env_reminder/collect.py` 后 grep 确认该技能不再出现；`--status` 对 dashboard 型本就报未找到，验不出清没清）——**只改 state 不复跑等于没验**。
 - **手工审查的对齐点**（比照 §2 的「审但不改」思路，但 dashboard 插件属自家可控，可改）：①读 `api.py` 的路径校验与写安全（realpath + 前缀匹配、输出撞号 409、并发锁、子进程参数用列表而非 shell）；②读 `manifest.json` 的 version 与能力描述是否与实现一致；③凭据不进代码（走加密库）；④版本注册表是技能侧的机制，dashboard 插件**不在注册表内**，见 §2「不适用」思路如实说明即可
 - ⚠️ **别把「工具报未找到」写成「这个技能不存在」**：「未找到」= 工具覆盖不到这种形态，不是对象不存在。汇报时必须把两者分开，否则下个会话会去删一个真实存在的插件
 - **主人说「排除」时先分清是排除哪种**：「这个排除掉」可能指「排除出待办清单」（→ 加 exempt，见 §7）也可能是「这次不审它」——两者落地动作完全不同。前者要改机制、后者只要不报。**审了也没意义的（如 webui 每次更新就回来的）应走 exempt**，让下个会话也不再被它打扰；只 skip 一次则下次 mtime 一动又回来

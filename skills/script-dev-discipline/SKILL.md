@@ -1,7 +1,7 @@
 ---
 name: script-dev-discipline
 description: 写脚本或技能模板时使用。跨平台脚本开发规范：环境确认、模板复用、静态校验、输出流分流、3轮迭代终止。
-version: 1.17.0
+version: 1.17.1
 author: 星光
 license: private
 metadata:
@@ -249,9 +249,8 @@ m._save = lambda *a, **k: None       # 拦写状态 —— 只拦前者仍会落
 所有主机 SSH 一律走统一通道，**禁止自行安装/新建任何 SSH 凭据工具**（各 profile 一致遵守）：
 - 系统级已常备：`/usr/bin/sshpass 1.10`；公共 venv `/opt/data/vncenv` 已含 paramiko（唯一许可的 paramiko 位置）
 - 免密主机（优先用，零依赖）：`ssh -i /opt/data/.ssh/id_ed25519 <user>@<host>`
-  · NAS主机(fnOS) userA（2026-08-28 已配免密）/ 远程主机A 217 userB（已配，主机离线时走 HA 插座唤醒）/ 远程主机B 69 user
-- 密码主机（无免密时的兜底）：`sshpass -p <pw> ssh ...`（密码从加密库读取，环境变量传递，禁止明文）
-  · HA 154 root（xiaomi_tts 上传音频用，走 vncenv paramiko，不属本通道）
+  · fnOS userA（已配免密）/ 远程主机A 217 userB（已配，主机离线时走 HA 插座唤醒）/ 远程主机B 69 user / 154 HA root（已配，参考实现 /opt/data/scripts/ha154_exec.py：单命令+--stdin 双模式，exit_code 沿用远端）
+- 密码主机（无免密时的兜底）：`sshpass -p <pw> ssh ...`（密码从加密库读取，环境变量传递，禁止明文）；存量脚本 xiaomi_tts.py / vnc_docker.py 经 vncenv paramiko 运行（许可位置内存量用法，新脚本一律走 ssh/sshpass/密钥）
 - 禁止行为：**再次** `apt install sshpass/paramiko`（系统已常备，只许一次性预装）；pip/uv 新建 ssh 专用 venv 丢 /opt/data/tmp；node `require('ssh2')` 寄生依赖（nas-tool 已弃用此通道）
 - 发现脚本缺 SSH 能力时：先复用上述通道，缺工具直接向主人报告，不自行安装
 - 违规处置：审计 cron「SSH 工具合规审计」每周日 9 点自动扫描，违规即推卡片；收到后按本规范整改（新增 venv 直接删除、多余安装卸载）
@@ -329,6 +328,8 @@ m._save = lambda *a, **k: None       # 拦写状态 —— 只拦前者仍会落
 
 ## 版本历史
 
+- v1.17.1：SSH 通道统一规范更新——154 HA root 已配免密密钥（参考实现 ha154_exec.py：单命令+--stdin，弃 paramiko 改 ssh 通道）；密码主机存量 xiaomi_tts/vnc_docker 仍走 vncenv paramiko（许可位置内存量用法），新脚本一律 ssh/sshpass/密钥
+
 - v1.17.0 (2026-10-31)：监控状态机三补——①混合时间线（采样≈行+权威精确行）渲染前必须按事件 ts 全局排序（追加顺序≠时间顺序，精确行会排在估算行后）；②权威事件源可用时终态确认走快速通道，但确认快照采样时刻必须晚于事件时刻（防旧帧配新事件误封中途行程），采样更早退回延迟确认；③注入测试新增捷径分支时旧判据必须构造为不满足，否则旧判据先命中、测试通过但没测到新分支。实例：行程卡「≈07:09 解锁排在 07:07 点火前」+ 熄火即封快速通道落地（9 场景注入）
 
 - v1.16.1 (2026-10-30)：新鲜度闸门节补一条——抽共用渲染/封板函数时返回的标题必须真接住（`_` 丢弃返回的 (标题,行) 会让归因后缀只在一条路径生效，两处封板路径卡面标题静默漂移）；复验须对标题与行逐字段断言。实例：行程卡 seal 函数主路径丢 s_title，终验抓出标题丢「·位置」
@@ -359,5 +360,5 @@ m._save = lambda *a, **k: None       # 拦写状态 —— 只拦前者仍会落
 - v1.4.3 (2026-10-12)：新增「改监控/采集链路：先列数据的消费者」——提议改读缓存/日志快照前须逐字段核对快照是否覆盖报表实际展示的项（某些字段来自另一条独立通道），并列出该数据的全部消费者（拉长采样会同步劣化告警发现延迟与按原频率标定的防抖窗口）；主人以「有没有考虑到 X？」反问点破遗漏时应停手重新推导
 - v1.4.2 (2026-10-12)：新增「优化类提案：先分清目标函数」（默认把延迟当功耗会推出反效果方案，需先量成本大头、宁可推荐不改）、「改造既有脚本前先核对注释与代码一致」（错注释+死字段会带偏后续所有优化）、「先取现场实测值再定方案」（运行态参数以实测为准，上一轮结论要重新验证）三条通用纪律——禁止行为明确为「再次安装」（消歧义）、补密码主机 HA 154 说明、补违规处置/回滚路径
 - v1.4.0 (2026-08-28)：新增「SSH 通道统一规范」章节——系统 sshpass+免密优先、paramiko 唯一位置 vncenv、禁止自装 SSH 工具/新建一次性 venv（含审计兜底说明）
-- v1.3.1 (2026-08-28)：审查修订（八维，实跑验证后改）——C1 related_skills 死引用 `lan-host-access`、`host-a-ctl`（已并入 windows-ctl）改为 `windows-ctl`、`fnos-trim`；C2/G1 「受控产物目录」「临时目录」表「NAS（fnOS）：/opt/data/」过时（fnOS 已迁远程主机B VM，/opt/data 归 Hermes 容器）修正为「本容器（Hermes）」并删重复条目
+- v1.3.1 (2026-08-28)：审查修订（八维，实跑验证后改）——C1 related_skills 死引用 `lan-host-access`、`host-a-ctl`（已并入 windows-ctl）改为 `windows-ctl`、`fnos-trim`；C2/G1 「受控产物目录」「临时目录」表「星月NAS（fnOS）：/opt/data/」过时（fnOS 已迁远程主机B VM，/opt/data 归 Hermes 容器）修正为「本容器（Hermes）」并删重复条目
 - v1.3.0 (2026-08-16)：吸收并入（原脚本模板规范）

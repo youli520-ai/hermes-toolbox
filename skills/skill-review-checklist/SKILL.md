@@ -1,21 +1,26 @@
 ---
 name: skill-review-checklist
 description: 技能逐字审查与优化。当主人要求检查/审查/优化某个技能（找矛盾、重复、漏洞、提速、模板化、减少思考步骤）时使用。
-version: 1.23.2
+version: 1.26.0
 author: profile-C
 license: internal
+related_skills: [skill-library-maintenance, state-db-internals, writing-skills]
 tags: [技能审查, 优化, 重构, checklist]
 metadata:
   hermes:
     tags: [技能审查, 优化, 重构, checklist]
     category: ops
     change_log:
+      - {ver: "1.26.0", date: "2026-11-05", change: "子代理盲审机制落地（主人批试点，本技能自身首试即产 16 条 0 误报）：①新增「子代理盲审」章——红线级审查（新技能/新增逻辑）由全新上下文子代理只读盲审（九维+A1-A5，发现须带原文引用与位置、只报不改），主端四类分诊闭环（采纳/误报/待查计数须闭合，否决误报须主端自出实跑证据或规则引用）；②修复盲审 16 条中的 14 条采纳项：references §1 bundled_manifest 判定命令去引号（原带引号对该文件恒 0=假阴性）、白名单硬编码 9 实为 11 改实测口径（自家盲区#8 第三次重演）、盲区#17 两处错引改指 references §8、四态→三态口径统一、exempt 与「技能必审查」红线补裁决（exempt=机制化 --skip 须主人点名）、三区表 review_check.py 归属注记+env_reminder 补归属、§8 手工清 pending 补备份/json校验/回滚、落地流程补「环境核验+references 通读」两项编号外强制动作、盲区#26 _removed_* 死机制改实指归档目录（全盘搜证代码不存在）、盲区#21 搜证范围补核心区与 env_reminder、--done 护栏（1.9.5）补入正文闭环清除条、自身补 related_skills（自指命中自动项#2 假阴性）、§6 标题残缺与「清了不」错字、changelog 1.21.1 错位修复；③挂起 1 条：高频#6 的 22=15+4+3 数字不闭合（历史实测记录，回溯成本>价值，如实标注不修）。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
+      - {ver: "1.25.1", date: "2026-11-04", change: "review_check.py 参数必须用 frontmatter 的裸技能名，不带分类目录前缀——category/路径形态（如 agent/<名>）三 profile 全报「技能未找到」，裸名才命中；报「未找到」先换裸名重试再下结论（与盲区 #17「工具报未找到不等于技能不存在」同族）"}
+      - {ver: "1.25.0", date: "2026-11-04", change: "盲区表新增 #27「执行体文件的 cron 运行时写回」——技能自家托管 cron 定期写回 scripts/ 下运行时配置（config.json 队列状态/时间戳落盘），每轮采集按执行体变更挂 touched_scripts pending，机制上不可豁免；定源三查=mtime 对齐 cron 调度时刻+grep 内容运行态字段时间痕迹+现状 md5 对首检基线（旧条目 md5=None，内容级只能靠 mtime 无变化佐证）；定性运行态后 --done 备注写明 cron 触发源，内容级变更另案审。注册表对齐 warning 在双端分代技能上按代差解读（登记值=主审端最高版本），不据此强升低代端。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
+      - {ver: "1.24.0", date: "2026-11-02", change: "清两条 pending（影视库技能 / provider 插件父容器）提炼三条（星光主审）：①盲区表新增 #26「pending 首检 delta 不可回溯：复核对象是现状不是当时」——pending ts=首次检出时间且不更新（append_pending setdefault 同键只升标记），基线检出即刷新+文件随后删出监控树 ⇒ 无法逐字节回溯当时改了什么，复核转三步现状核（现存对基线 mtime+md5 分运行态/内容、删除类查 _removed/归档副本逐文件 md5 对照、回溯不到如实写不可回溯）；②闭环补注：探针写进技能 scripts/ 的非点前缀文件不在 SKILL_RUNTIME_FILES 豁免名单（名单逐文件名登记+只拦点前缀），每次写入挂 touched_scripts 假 pending——先分运行态/内容再 --done 备注触发源，名单增补=改 collect.py 执行体须先报主人批；③--done 长备注经 shell 双引号传参易报 unexpected EOF 截断，用 subprocess 列表参数调用。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
       - {ver: "1.23.2", date: "2026-10-30", change: "再修 §8 步骤②（write-gate 两轮对照实测推翻 1.23.1 结论）：手工清 pending 机制是两层——便签待审直接来源=skill_review_state.json 的 pending 键（read_pending 实读，只刷基线不删键→便签照报），skill_scan_state.json 基线是防重挂层（只删键不刷基线→下轮重挂，1.23.1 据此误判「删键无效」）；两层都动才算清。教训：判「某法无效」前确认另一层也动过"}
       - {ver: "1.23.1", date: "2026-10-30", change: "修正 references/builtin-skills-disposition.md §8 手工清 pending 步骤②（dashboard 插件实测复核）：pending 无独立表，是 collect.py 拿当前文件与 /opt/data/state/skill_scan_state.json 基线（files 字典 {路径:{mtime,md5}}）比对算出——手工清=把审过的文件基线条目刷成当前值（三 profile md5 核一致后连 profiles 侧一起刷），旧记载「去 skill_review_state.json 删 pending 键」对这套机制无效；④收尾验证从 --status 改为跑真实采集（--status 对 dashboard 型本就报未找到，验不出清没清）。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
       - {ver: "1.23.0", date: "2026-10-29", change: "审查盲区表新增 #25「已审已修声明四点核验」+ 前置新增第 3 步「动执行体前先排并行会话」（星光主审，追插件「已审已修」假声明实测提炼）：①记忆/环境便签注入的自报声明与 changelog 同级不可信——四点证据（磁盘修复特征 grep/文件版本号/skill_review.log --done 留痕/三 profile state.db 会话消息检索）缺一即定性修复未落盘，不得当作已修继续用；②文件 mtime 新但内容与旧版 md5 逐字节一致＝被静默还原，先对 mtime 的 epoch 时间窗检索三端会话消息追写入者，检索不到＝外部通道（部署脚本/共享卷另一实例）在写——不排除写者就重做修复，修完必然被再次还原；③同一任务可能被多个 TUI 会话并发处理，双方同时 patch 同一执行体会互相覆盖、--done 互清 pending，动手前查 sessions.started_at 同日多条即停手报主人只留一个（state.db 时间列是 epoch 秒，日期字符串 LIKE 恒 0 行，见 state-db-internals SQL 陷阱）。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
       - {ver: "1.22.1", date: "2026-10-29", change: "审查盲区表新增 #24「缓存快路径把回退链死路径永久遮蔽」（批审 provider 插件提炼，星光主审）：TTL 覆盖刷新周期（30h>24h）致快路径恒命中、回退链从未真跑——移植函数丢失的常量定义（NameError 被宽 except 吞成 None）与探测 tools 残留旧代指纹（新闸门必拒全判 dead）双双潜伏无报错；判据=①带缓存组件必须强制真跑一次慢路径（清缓存/直调探测入口）②留痕字段（如缓存文件里区分快慢路径的 source 标记）为空先证伪回退链③回退路径引用的模块级常量逐个 grep 定义处。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
-      - {ver: "1.21.1", date: "2026-10-18", change: "两处实测补强（星光主审）：①D 维新增「删除能力的调用链要追到 main()」——函数内确认闸门不等于默认不删，巡检脚本常在 main() 无条件调用 rm，实例 path-audit.py 每次巡检都 rm -rf 回收站 30 天前目录且无 --clean 开关；审 D 维要对删除函数 grep 全部调用点，只读函数体查不出。②references/builtin-skills-disposition.md §8 补 dashboard 型插件「手工清 pending」具体四步：真跑一次确认未找到 → 只删自己审过的键 → 追日志留痕 → --status 复验为空，防止「只改 state 不验」。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
       - {ver: "1.22.0", date: "2026-10-21", change: "批审四个待审技能（逆向接入 / Windows 主机 / 夸克网盘 / provider 插件）后补三处通用规则 + 一条检测器缺口（星光主审）：①审查盲区表新增 #20-#23：#20 不可达兜底块里的未定义名——try 内已 raise 且 except 每个分支都 return 时，try 之后的兜底块永不执行，重构改名的变量留在死块里即成潜伏 NameError；判据=列 try 的 raise 条件+except 的 return 分布定可达性，再 AST 收集函数内 Store 名集合 grep 块内标识符（实测 codebuddy fetch_models try 后兜底块引用从未赋值的 models，打桩跑「解析后为空」场景确认走 except 分支、死块永不执行）；确认不可达且语义已被 except 覆盖 ⇒ 删整块，别只改名修变量。#21「某 cron 会刷新 X」必须 grep 出真实写入者再对 jobs.json 核调度——名义 cron 管的可能是另一个文件，缓存/TTL 机制静默失效且无任何报错（实测快照 age 远超 TTL、唯一写入者是手动 discover，技能里早写下的「挂 discover cron」纪律从未落地，插件头还留着写反方向的那句话）。#22 自建脱敏/凭据扫描正则必须用符号边界值测——字符类漏一个符号（~）整条不命中，值原样穿过脱敏进包，而依赖清单正写着「不含明文凭据」= 假承诺；只验键名侧全替换会以为成功了。#23 第三方 CLI 托管的运行时凭据躺在技能目录：不动文件、不争论入不入库，只查它会流去哪（copytree 打包 / 三端同步白名单），并按 exempt 判据（变更是否出自会话之手）处理 pending 噪声。②G 维新增「探测路径与运行时路径必须共用同一套常量」——provider 插件的模型发现与请求注入常各自硬编码不同代指纹（UA/工具表/端点），一条活着一条已死；验真伪各打一次真实最小请求并按证据强度分级（200+真实产出=活着；429/503=transient，不断言坏）。③自动项契约补 #2 检测器缺口：related_skills 写在 metadata.hermes 下时顶层扫描恒报「未声明」（假阴性），人工须再读 metadata 子树，修法是扫描器两层都读。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
+      - {ver: "1.21.1", date: "2026-10-18", change: "两处实测补强（星光主审）：①D 维新增「删除能力的调用链要追到 main()」——函数内确认闸门不等于默认不删，巡检脚本常在 main() 无条件调用 rm，实例 path-audit.py 每次巡检都 rm -rf 回收站 30 天前目录且无 --clean 开关；审 D 维要对删除函数 grep 全部调用点，只读函数体查不出。②references/builtin-skills-disposition.md §8 补 dashboard 型插件「手工清 pending」具体四步：真跑一次确认未找到 → 只删自己审过的键 → 追日志留痕 → --status 复验为空，防止「只改 state 不验」。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
       - {ver: "1.21.0", date: "2026-10-16", change: "批审三个技能（环境依赖审计 / 影视库整理 / provider 插件）后补三条通用规则（星光主审）：①前置第 2 步补「执行体同样要通读全文，尤其文件头」——改动常只落在函数体/常量，模块 docstring 仍写旧端点、旧头、旧协议，只读 diff 改动块会把「同一文件内自相矛盾」整段漏掉。②G 维补「文档承诺 vs 脚本实现」——文档里的祈使句（须/必须/记得/一律）要 grep 配套脚本确认真做了，否则守卫只留在纸上；同族脱节=校验/探测脚本不随实现更新，跑出来的是关于脚本的假结论。③前置第 1 步补「跨 profile 内容分叉 ≠ 整目录覆盖」合并流程：先 diff -rq 分内容差异与运行态差异（config.json/fid_cache/inspect_result/.bak/__pycache__ 不参与合并），再逐文件判方向（内容包含关系、版本高者胜），只动文档与共享脚本，反向推给对端须逐条留痕，合并后复跑 diff + 三端 md5；并补「文档声明已删除的文件要顺带核磁盘是否真的没有，残留即 X/E 维发现」。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
       - {ver: "1.20.0", date: "2026-10-16", change: "同轮追加①盲区表新增 #19（红线级）「按技能名清 pending 会让文档改动替执行体变更背书」：pending 只按技能名记、不记来源，同一技能先有未审的执行体变更、再来一次只改文档的变更时，后者 try_auto_review → auto-done 按名字清 pending，把执行体那条一并清掉 = 红线「执行体不可免审」被机制绕过（2026-10-16 实测发生在 fnos-media-library-org）。修法已落地 collect.py：pending 记录加 touched_scripts 标记（只升不降）+ 派发逻辑抽成纯函数 decide_local_disposition()（已有执行体级 pending 时仅文档变更也必挂 pending），单测 4 场景全过 + collect --dry-run 实跑 exit 0；②同步修 #18 那两处（见 1.19.0）的判据口径：查 pending 先看 touched_scripts 再谈清没清。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
       - {ver: "1.19.0", date: "2026-10-16", change: "批审三个技能（env-dependency-audit / fnos-media-library-org / plugin:model-providers）自踩提炼两条 + 一处存量格式修复：①审查盲区表新增 #18「审查工具自身的并发写竞态」——review_check.py 与 env-reminder 的 collect.py 都写死 tmp 名 `path + \".tmp\"` 且都写同一个 skill_scan_state.json，cron 采集与人工 --done 撞同一秒时一方 os.replace 报 FileNotFoundError；现象极具误导（pending 已清、日志已留痕，只有退出码非 0 且扫描基线未更新）。修法=tmp 名带 pid + 容错，两处已落地，3 线程×40 次并发写实测 0 异常。②存量 X 修复：审查盲区表被三处空行切成 4 段，后三段（#10-#13 / #15-#17 / #18）**没有表头与分隔行**，Markdown 根本不渲染成表格——已删空行并回单表。③本轮同类教训复用于本次三个待审：执行体改完同文件头顶 docstring 常留在旧状态（opencode-free 顶层仍写 zen/v1 + desktop 头），审查必须逐字读被审文件头部而非只读改动块。附：本技能在 skill_sync 白名单内，改完三端同步；登记版本注册表照常"}
@@ -34,7 +39,7 @@ metadata:
       - {ver: "1.10.0", date: "2026-10-07", change: "新增「审查双翼：第一性原理 × 对抗性审查」章节（主人定，收入评估方法）：两把思维尺定位为**九维之上的思维方法层**、不占维号（避免九维→十一维全文口径返工）——第一性原理 F1目的追溯/F2假设显性化/F3从零重建/F4还原到事实（F4 与核心铁律「先验证后修改」同源）；对抗性审查 A1输入攻击/A2误用攻击/A3声明质证/A4失败注入/A5规则对撞，「攻击只产问题不直接改、结果归入九维对应维编号走原 patch 流程」。落地流程第 0 步接入：完整审查九维全量后追加对抗轮，增量审查至少 A1+A3。"}
       - {ver: "1.9.5", date: "2026-10-04", change: "「--done 护栏」落地（星光主审，主人定「动吧」）：自动项 #4 注册表对齐按子情形分级——缺行仍 block（须人工补：要决定分区与描述），有行但版本滞后降 warning（纯机械同步，detail 直接附 skill_reg.py 一键命令）；配套实跑四场景验证（缺行+done 拒绝 / 缺行+skip 放行 / 仅版本滞后+done 放行 / 全绿+done 正常）。⚠️ 实测暴露原有缺陷并顺带修复：--done 原先直接调 clear_pending 完全不跑检测，导致所有 block 项对 done 路径形同虚设（用改动前备份版对照测试同样放行，确认为原有缺陷非本次引入）——现改为 --done 先跑 run_auto_checks，有 block 失败则拒绝清除；--skip 仍放行（显式跳过是主人行使的豁免权，不该被机器拦）。⚠️ 教训：改自动项必须实跑端到端 CLI（本轮先写了不存在的 run_checks()，靠 grep 核实真名 run_auto_checks(name, skill_path, meta) 三参才修正，否则护栏是 NameError 空壳）；另注意 collect.py 的 auto_done() 走 clear_pending 直连、不经过 --done 分支，护栏不影响自动路径。「标准先行脚本跟随」：本条与标准表 #4 同步更新。附：脚本无版本号机制、仅 default 一份无需三端同步。"}
       - {ver: "1.9.4", date: "2026-10-04", change: "自审修复 5 项（星光主审，主人点名『改，并验证同步机制与环境便签』）：E1 落地流程第7步白名单「6 个」→ 实测 9 个并改为「以 DEFAULT_WHITELIST 实测为准、不硬编码数量」（长期对不上号，照文档判同步会遗漏 3 个）；G1 新增「审查盲区」#8 自审盲区（自身即检测源/白名单成员漂移/三端复制）；G2 新增 #9 同步机制覆盖盲区（skill_sync.py 只扫 skills/ 完全不扫 plugins/，插件漂移对同步机制结构性隐形——实测 env-reminder profile-C 端落后 default 两个修复而 --check 报三方一致）；C1 速查表引言「四类」→「五类」并补「自动项≠审查通过」边界声明（9 条自动项全绿时人工九维仍查出 5 个问题）；C2 增量清单「五项」→「六项」；G维例子「自动项只有 4 条」→ 9 条。附加实战修复：env-reminder 插件 profile-C 端 md5 漂移已同步（cp -p 保留 mtime）"}
-      - {ver: "1.9.3", date: "2026-09-20", change: "修复 review_check.py 死引用检测误报（2026-09-20 主人质疑「有按技能流程吗」暴露）：目录名≠frontmatter name 的技能（如 skill `fnOS-CLI` 存于 `fnos-trim/` 目录）被误判死引用——原检测只按 `os.walk` 目录名匹配；新增 `_skill_name_matches` 读 SKILL.md frontmatter name 兜底匹配。⚠️ 本次误报曾误导把 secrets-manager 正确引用 `fnOS-CLI` 误改为 `fnos-trim`，靠实跑发现后还原+三端 force 同步纠正。教训：自动化检查（review_check 自动项）输出必须**先验证再改**，不能盲信——尤其涉及 D 红线的技能，误报可能诱导改成错的方向；且「自动项全绿」≠「九维人工审查通过」，纯快扫 done 需显式标注「未人工复核」"}
+      - {ver: "1.9.3", date: "2026-09-20", change: "修复 review_check.py 死引用检测误报（2026-09-20 主人质疑「有按技能流程吗」暴露）：目录名≠frontmatter name 的技能（如 skill `trim-cli` 存于 `fnos-trim/` 目录）被误判死引用——原检测只按 `os.walk` 目录名匹配；新增 `_skill_name_matches` 读 SKILL.md frontmatter name 兜底匹配。⚠️ 本次误报曾误导把 secrets-manager 正确引用 `trim-cli` 误改为 `fnos-trim`，靠实跑发现后还原+三端 force 同步纠正。教训：自动化检查（review_check 自动项）输出必须**先验证再改**，不能盲信——尤其涉及 D 红线的技能，误报可能诱导改成错的方向；且「自动项全绿」≠「九维人工审查通过」，纯快扫 done 需显式标注「未人工复核」"}
       - {ver: "1.9.1", date: "2026-09-10", change: "高频问题速查新增第 5 条「读取层脱敏致误判（假截断）」——输出层自动脱敏敏感值，完整内容显示成星号像被截断；可疑处必须字节级核验再改（审 hermes-local-admin 实测沉淀）"}
       - {ver: "1.9.0", date: "2026-09-06", change: "新增「自动项清单（算法-脚本契约）」章节（主人定的插件化方向）：把九维/盲区里可机器化的检查点固化为自动项目录（9条，含新增5条），作为 review_check.py 快审脚本与 collect.py 自动绑定之间的契约——标准先行、脚本跟随；新增「首版缓冲」策略（新自动项首轮默认警告不block，跑稳后人工确认才升级block）；同步约定脚本升版后须回填登记到本技能；此章独立，便于后续增删；三端待同步"}
       - {ver: "1.8.2", date: "2026-09-06", change: "审查盲区表补第 7 条「mtime 污染风险」（主人补，同步机制事故沉淀）：copytree 默认不保留 mtime 会把文件 mtime 重写成复制时刻——检测端纯 mtime 对比会误报（env-reminder 曾每次同步后误报待审查）、裁决端 mtime 较新者胜会反向覆盖（fnos-quark-autosave 差点反向覆盖）；修复范式=内容一致性用 md5 裁决、mtime 只作快筛绝不参与方向裁决、复制用 copy2/cp -p 保留 mtime；审查时 grep getmtime/copytree/mtime 确认无「拿 mtime 当裁决」用法"}
@@ -55,7 +60,7 @@ metadata:
       - {ver: "1.4.3", date: "2026-08-28", change: "核心铁律补「changelog/已修复/可用声明是最不可靠源」子教训——修 bug 后必须实跑被修代码确认，不能只信 changelog。实战连抓两个假声明：secrets-manager v1.3.0 声称修复 secure_read 换行 bug 但代码仍管道输入（实测读凭据空）；hermes-gateway-plugins 声称 hermes config CLI 可用但实测 PermissionError。验证修复=跑代码看结果，不是读文档看文字"}
       - {ver: "1.4.2", date: "2026-08-28", change: "开篇新增核心铁律「先验证，后修改」（主人定第一原则）：审查中不确定的事实（数字/路径/口径/范围/行为）一律先实跑验证确定了再改，绝不凭记忆/经验/文档旧记载下结论；含四类实测方法与缘由（审 ha-ctl 铁律范围/口令数实测验证）"}
       - {ver: "1.4.1", date: "2026-08-28", change: "自查（用本技能审自身，主人确认8处全修）：C1/C2/S1 标题五维→八维审查清单并注扩展来源；G1/T1 两前置合并为一（先定主审再通读）；R2 G维补 S异常兜底 vs G回滚撤销 边界；G3 落地流程第6步补同步版本注册表；S2 审查类型判错兜底宁多勿漏；T2 新增八维一句话速查表；X1 changelog 表述修正"}
-      - {ver: "1.4.0", date: "2026-08-28", change: "主人逐条核对补全审查点：新增 D 维「红线」（凭据明文/授权边界/危险命令）、E 维「体验」（通知格式/日志审计/废弃清理）、X 维「文字」（错字漏字/排版/转义，逐字审查要抓的重点）；G 维补回滚/撤销 + 重试统一 2 次；总原则强化「重复需求脚本模板化不临场拼代码」；增量清单补 A 依赖三则（引用不动不查/需改必查/少引用）+ B 验证需实跑；前置定主审 profile（生图=profile-C/影视=profile-B/家居=默认）"}
+      - {ver: "1.4.0", date: "2026-08-28", change: "主人逐条核对补全审查点：新增 D 维「红线」（凭据明文/授权边界/危险命令）、E 维「体验」（通知格式/日志审计/废弃清理）、X 维「文字」（错字漏字/排版/转义，逐字审查要抓的重点）；G 维补回滚/撤销 + 重试统一 2 次；总原则强化「重复需求脚本模板化不临场拼代码」；增量清单补 A 依赖三则（引用不动不查/需改必查/少引用）+ B 验证需实跑；前置定主审 profile（生图=profile-C/影视=profile-B/家居=星光）"}
       - {ver: "1.3.0", date: "2026-08-28", change: "新增四大章节：脚本位置体系（三区+技能文档索引+存量不动/新增归位）、主入口唯一性四判据、分支四判据（正交/必要/主次兜底/传递依赖）、增量变更审查清单（查依赖/查入口收敛/查源自洽）；S维扩展分支判据；解决找脚本/找入口混乱的根源"}
       - {ver: "1.2.0", date: "2026-08-26", change: "第五维S补配置插件化标准：高频变动数据（工作流清单/匹配规则/强度映射）外置配置文件，正文改引用+速览，新增模型/改配置不动正文"}
       - {ver: "1.1.0", date: "2026-08-26", change: "新增第五维 S（稳定性/防错）：统一入口、流程自洽、分支最小化、默认路径清晰、异常不迷路"}
@@ -96,7 +101,7 @@ metadata:
 | 领域 | 主审 | 说明 |
 |------|------|------|
 | 生图类技能 | profile-C | comfyui-host-a 等 |
-| 影视库类技能 | profile-B | media-library-org、media-tool 等 |
+| 影视库类技能 | profile-B | fnos-media-library-org、nas-tool 等 |
 | 智能家居类技能 | 星光 | ha-ctl、windows-ctl 等 |
 
 跨领域或通用技能（如本审查技能）由实际提出需求的一方主审，其余 profile 同步版本即可。
@@ -265,7 +270,7 @@ metadata:
 - **自动检测**：env-reminder 采集（/opt/data/env_reminder/collect.py）第 5 项 skill.review——扫描三 profile 技能目录（default/profile-B/profile-C），任一文件 mtime 变化（新建/增量/只改 references/只改脚本全覆盖，不依赖注册表比对）→ /opt/data/state/skill_review_state.json 标记 pending；首次运行只建基线不误报
 - **持续提醒**：pending 非空 → 每次会话注入「技能审查：N 个待审查（名单）」便签，直到审查清除
 - **审查执行**：`python3 /opt/data/scripts/review_check.py <技能名>` —— 自动项（见下「自动项清单」9条：版本格式 / related_skills 死引用 / 明文凭据 / 注册表对齐 / 存量冗余 / 版本堆积 / 废弃残留 / profile名过时 / mtime污染）+ 人工九维清单输出。**`plugin:<插件名>` 同四通道**（2026-10-08 起）：插件检查集=版本/凭据/堆积/mtime 四项（依赖 frontmatter/注册表的项 N/A），`--auto` 对插件显式拒绝（执行体不可免审，须人工审查后 --done/--skip）。**`plugin:<父目录名>` 同样支持**：插件存在嵌套结构时（父目录自身无 `plugin.yaml`、子目录才是真插件，如 model-providers/{codebuddy,opencode-free}），定位到父目录后逐个子插件展开检查、给 detail 加子插件名前缀，避免父容器被假报「版本号格式」失败。
-- **闭环清除**：`--done "备注"`（审查通过）/ `--skip "备注"`（纯文字小修订显式跳过）→ 清除 pending + /opt/data/logs/skill_review.log 留痕
+- **闭环清除**：`--done "备注"`（审查通过）/ `--skip "备注"`（纯文字小修订显式跳过）→ 清除 pending + /opt/data/logs/skill_review.log 留痕。⚠️ **--done 先跑自动项，有 block 失败则拒绝清除**（1.9.5 护栏，2026-11-05 补入正文——此前只记 changelog）；--skip 不跑护栏直接放行（显式豁免是主人行使的豁免权）
 - **顺序铁律**：变更 → pending → 审查 → 登记（登记永远在审查之后）
 
 ```bash
@@ -274,6 +279,10 @@ python3 /opt/data/scripts/review_check.py <技能名> --done "备注"  # 审查�
 python3 /opt/data/scripts/review_check.py <技能名> --skip "备注"  # 小修订显式跳过
 python3 /opt/data/scripts/review_check.py --status               # 待审查清单
 ```
+
+- ⚠️ **review_check 参数用 frontmatter 的裸技能名，不带分类目录前缀**：`review_check.py agent/<名>`（category/路径形态）三 profile 全报「技能未找到」，`review_check.py <名>` 才能命中——报「未找到」先换裸名重试再下结论，别据此判定技能不存在（同族铁律在 references/builtin-skills-disposition.md §8，2026-11-05 修正错引）
+- ⚠️ **运行态文件会漏出豁免名单挂假 pending**：collect 的运行时豁免是**逐文件名登记**（SKILL_RUNTIME_FILES / PLUGIN_RUNTIME_FILES）+ 拦点前缀文件名，探针/脚本写进技能 `scripts/` 的**非点前缀**文件（如 probe-marker.json）不在名单内 → 每次写入都挂 touched_scripts 假 pending。复核先分运行态/内容差异，运行态噪声在备注写明触发源后 --done；往名单加名＝改 collect.py 执行体，先报主人批再动
+- ⚠️ **--done 长备注别经 shell 双引号传参**：长中文/含括号备注经 shell 传参易报 unexpected EOF 被整体吞掉，用 Python `subprocess.run([..."--done", note], ...)` 列表参数调用
 
 ### 自动项清单（算法-脚本契约，2026-09-06 主人定插件化方向新增）
 
@@ -318,16 +327,17 @@ python3 /opt/data/scripts/review_check.py --status               # 待审查清�
 **内置技能的归属分流（2026-10-12 方案丙，从源头解决上游同步刷 mtime 误报）**：
 
 - **链路**：`collect.py iter_skill_files()` 只看 mtime 变化，`skill_name_from_path()` 只按 `skills/` 段取名——**两者都不分辨归属**；上游同步是静默的 → 内置技能一被同步就进人工待审，纯噪声
-- **四态分流**（local / builtin / exempt，manifest 不可读时 fail-closed 收敛为 builtin）：
+- **三态分流**（local / builtin / exempt；manifest 不可读时 fail-closed 收敛为 builtin，不构成独立第四态——2026-11-05 修正，原「四态」与实列三态自相矛盾）：
   1. **归属判定** `skill_origin.py`：① 命中 `.bundled_manifest`（格式为 `name:md5` 纯文本行，**不是合法 JSON，`json.load` 必抛异常**，须按行 split）→ builtin；② 命中 `EXEMPT_FROM_REVIEW` 名单（由**别的维护通道**装/维护的技能）→ exempt；③ frontmatter author 含官方署名**只作辅助信号，不单独定案**（社区技能也常署名 Hermes）；其余 → local；manifest 不可读 → fail-closed 按 builtin（宁可少打扰）
   2. **处置分流** `collect.py`：local 走原逻辑不变（动执行体挂 pending / 只改文档走 `--auto` 快审）；builtin 只跑只读 `--auto`，结论写 `/opt/data/state/builtin-notes.md` 备案，**永不写 pending、永不进人工待办**；exempt 直接略过，**既不挂 pending 也不写备案**
   3. **查询入口** `review_check --status --builtin`：只读看备案
 - **红线不冲突**：「技能必审查」要求的是**审查**，不是**进待办**——内置技能仍跑自动审查，只是不占人工位（A5 规则对撞已裁决）
+- **exempt 与红线的裁决（2026-11-05 补）**：exempt 技能（含其脚本）变更不挂待办、不跑自动审查，形式上与红线「技能必审查」相撞——裁决：**exempt 名单由主人逐个点名，视同主人对该技能行使审查豁免权（机制化的 --skip）**，豁免的对价即「须主人点名」；主人未点名的一律 fail-closed 不进 exempt
 - **⚠️ 不要做 skip 名单**：上游新增内置技能时名单不同步就重新漏；且 `.bundled_manifest` 每次运行时读，天然跟随上游
 
 ## 落地流程
 
-0. **先判审查类型**（唯一入口分叉）：完整审查（整个技能重构/体检）→ 九维全量；增量变更（只新增/合并部分）→ 九维快速扫 + **增量变更审查清单**（见下）。判定法：改的是「技能整体」还是「技能一部分」。**拿不准时按完整审查走（宁多勿漏）**——完整审查不会漏，增量会。九维扫完**追加一轮「审查双翼」对抗**（完整审查全跑；增量至少 A1 输入攻击 + A3 声明质证），结果归入九维编号再 patch。
+0. **先判审查类型**（唯一入口分叉）：完整审查（整个技能重构/体检）→ 九维全量；增量变更（只新增/合并部分）→ 九维快速扫 + **增量变更审查清单**（见下）。判定法：改的是「技能整体」还是「技能一部分」。**拿不准时按完整审查走（宁多勿漏）**——完整审查不会漏，增量会。九维扫完**追加一轮「审查双翼」对抗**（完整审查全跑；增量至少 A1 输入攻击 + A3 声明质证），结果归入九维编号再 patch。⚠️ **编号步骤链外还有两项强制动作**（A2 误用实测：只按 0-8 编号走完即收工会漏）：「审查盲区：环境核验」章的全部盲区扫描、「前置第 2 步」的 references 逐篇通读——审查完成的判定以「九维+对抗+环境核验+references 通读」四件全做为准。
 1. **列任务清单**（todo）：每项问题一个 id，标记 红线/矛盾/重复/漏洞/优化/稳定/体验/文字 类别
 2. **逐条 patch**：优先做高影响项（红线 D > 持久化 P > 矛盾 C > 稳定性 S > 漏洞 G > 重复 R > 优化 T > 体验 E > 文字 X）——D 红线发现即停先报主人；P 持久化与 D 同级（不可逆静默损失，发现即处理）
 3. **合并重复**：多问题可合并为一条规则（如 4 处连接失败判断 → 1 条核心规则 + 索引）
@@ -341,7 +351,7 @@ python3 /opt/data/scripts/review_check.py --status               # 待审查清�
 - **行首双管道符 `||` 坑**：注册表某技能行若行首是 `||`（非 `|`），skill_reg.py 正则匹配不到。全表检查：`grep -n "^|| " <registry>`，遇 `|| skill` 改成 `| skill`（2026-08-31 实测 browserless-browser-service、skill-review-checklist 两行因此匹配不到）
 - **版本校验**：skill_reg.py 硬校验 X.Y.Z 三字段，日期取北京时间（zoneinfo Asia/Shanghai），新版本块自动插到备注最前保留历史
 7. **基础技能三端自动同步（2026-08-31 主人提醒后固化为铁律）**：**skill-review-checklist 等在 `skill_sync.py` 白名单里的基础技能，改动后必须同步到 default/profile-B/profile-C 三端**，不能只改profile-C侧就不管。流程：
-   - 白名单：**以 `skill_sync.py` 的 `DEFAULT_WHITELIST` 实测为准，不在本文档硬编码数量**（2026-10-04 实测已扩至 9 个：skill-review-checklist / memory-management / secrets-manager / script-dev-discipline / hermes-gateway-plugins / ha-ctl / messaging-channels / grilling / writing-for-agents）。⚠️ 历史坑：本文档曾长期写「6 个」，实际早已 9 个，照文档判「是否该同步」会遗漏新增项——**改白名单必须回头改此处，或更好的做法是以「跑 `--check` 看实际名单」为准**
+   - 白名单：**以 `skill_sync.py` 的 `DEFAULT_WHITELIST` 实测为准，不在本文档硬编码数量**⚠️ 历史坑×3：本文档硬编码数量两次漂移（写「6 个」实际 9 个；2026-10-04 主人拍板扩充 windows-ctl/todo-resume 到 11 个未回写文档、2026-11-05 子代理盲审实测抓出）。**本行不写数字与名单，一律以「跑 `--check` 看实际名单」为准**——写死数字=再次漂移的种子
    - 同步：`python3 /opt/data/scripts/skill_sync.py`（写）或 `--check`（只读检测差异）
    - ⚠️ **skill_sync 一次可能只同步 default↔某 profile，profile-B 需重跑确认**：2026-08-31 实测第一次跑只输出 profile-C→default 同步（profile-B 未报差异），重跑第二次才 default→profile-B 同步完成。**同步后必须三端 md5 核对**（`check_all.py`（`/home/agent/.hermes/skills/skill-library-maintenance/scripts/check_all.py`）或 python 比对三个 SKILL.md md5），确认三端一致才算完
    - 非白名单技能（profile-C独有 yao-anima3-prompt-templates、profile-C上游 comfyui-host-a-direct）**不自动推送**，按需人工/跨 profile 吸收
@@ -356,9 +366,11 @@ python3 /opt/data/scripts/review_check.py --status               # 待审查清�
 
 | 区 | 路径 | 放什么 | 典型 |
 |----|------|--------|------|
-| **核心区** | `/opt/data/*.py` | 统一入口的执行器、常驻主脚本 | device-ctl.py、watch_main.py、lib_*.py、review_*.py 等统一入口执行器（示例） |
+| **核心区** | `/opt/data/*.py` | 统一入口的执行器、常驻主脚本 | ha-ctl.py、ha_control.py、mijia_*.py、host-a_ctl.py、host-b_ctl.py、review_collect/log/push.py、fast_command_dryrun.py（⚠️ review_check.py 在服务区 /opt/data/scripts/，勿按 review_ 通配到核心区找）|
 | **服务区** | `/opt/data/scripts/` | 独立工具链/服务，被技能 SKILL.md 引用 | nas-tool、feishu_card.py、cron_notify.py、sweep*.py、cloud-prep.mjs |
-| **调度区** | `~/.hermes/scripts/` | **只放 cron 脚本**（watchdog/monitor/cleanup/watch），唯一真相 | status_watchdog.py、host_monitor.py、cleanup_watch.py、review_collect.sh（示例） |
+| **调度区** | `~/.hermes/scripts/` | **只放 cron 脚本**（watchdog/monitor/cleanup/watch），唯一真相 | mijia_status_watchdog.py、host-b_monitor.py、oil_price_watch.py、tempfile_cleanup.py、review_collect.sh |
+
+⚠️ **顶层子目录区（2026-11-05 补归属）**：`/opt/data/env_reminder/`（collect.py 等闭环执行体）不属三区任何一区，按「顶层子目录=功能专属目录」处理，找它别进三区逻辑。
 
 ### 技能文档索引（识别率的真正来源）
 
@@ -419,6 +431,23 @@ python3 /opt/data/scripts/review_check.py --status               # 待审查清�
 5. **查验证实跑（B 验证，2026-08-28 主人补）**：涉及状态文件/缓存/数据源的改动，验证**必须实际跑一遍**（写进文档不算，要真执行确认结果），如 pin_check、dryrun、接口连通性实测
 6. **查存量冗余（2026-08-31 主人补，破「引用不动不查」豁免）**：增量变更顺带核对被引脚本/技能在磁盘是否唯一——同功能双份、版本堆积、废弃残留（见「审查盲区」#1-#3）都是存量问题，审查文档时引用的对象存在不代表磁盘上没有第二份
 
+## 🤖 子代理盲审（2026-11-05 主人批试点后固化）
+
+> **定位**：写入者审自己存在机制性盲区——A3 声明质证的天敌是「我写的我信」（1.15.0 两条假证据均为自我担保）。全新上下文的子代理只看文本、无写作时的隐含知识，恰好测出「技能对外部读者是否自足」这一自审结构性测不到的维度。
+
+- **触发边界**：红线级审查（新技能 / 新增逻辑 / 新增脚本章节）**强制**跑子代理盲审；`--skip` 级小修订不强制。主审 profile 规则不变——子代理是「审查端」，主审 profile 仍是「裁决端」。
+- **子代理任务设计**：只读禁改；九维 + A1-A5 全维扫描；**每条发现必须带原文引用与位置（无引用不收）**；数字类存疑标「待实跑验证」不断言；历史 changelog/「已作废」表述不算矛盾；output_schema 强制结构化（dimension/location/quote/problem/severity/confidence）。
+- **主端分诊四类（计数闭环：采纳+误报+待查=报告总数，不丢条目）**：
+  | 类别 | 处置 |
+  |------|------|
+  | 真问题·文档维 | 主端 patch，走现行落地流程（版本/changelog/注册表/三端同步） |
+  | 真问题·待实跑 | 子代理报告只算**线索不算结论**，主端实跑定性再改（先验证后修改不变） |
+  | 误报 | 显式不采纳，**主端必须自出实跑证据或规则引用才能记误报**（A3 反向用在主端自己身上，防「我不信=误报」） |
+  | 越界发现 | 另一 profile 的技能、机制层（collect.py 等）——发现即停报主人 |
+- **审改分离的理由**：子代理无写权限 → 其误判最多消耗一条分诊，不会污染文件；patch 必须绑登记链，子代理不碰。
+- **清账格式**：`--done` 备注固定写「子代理盲审 N 条：采纳 X / 误报 Y / 待查 Z」，不采纳条目留痕防下轮重报。
+- **实证基线（2026-11-05，被审对象=本技能自身）**：16 条发现 0 误报，含 2 条子代理自实跑验证的硬伤（bundled_manifest 判定命令假阴性、白名单 9→11 漂移）与 1 条比其报告更严重的（_removed_ 机制全盘搜证不存在）；耗 636s / 5 次 API 调用。子代理 summary 属自报，硬证据须经主端独立复核后采信。
+
 ## 🔍 审查盲区：环境核验（2026-08-31 主人连问三连后补）
 
 > **核心认知**：九维清单查的是 **SKILL.md 文档文字本身**（矛盾/重复/漏洞/红线/错字都在文字里）。但一批高频问题不在文字里，而在「**文档引用的对象 vs 磁盘/注册表/使用史的真实状态**」的差里——单读文档永远查不出。审查任何技能，九维扫完后必须补跑以下环境核验：
@@ -435,7 +464,7 @@ python3 /opt/data/scripts/review_check.py --status               # 待审查清�
 | 8 | **自审盲区（2026-10-04 新增，本技能即典型案例）** | 被审技能**自己**是否属于高风险形态：①三端复制的白名单技能 ②自身就是其他技能的**检测源**（改自己会同时改变检测别人的逻辑）③白名单成员会漂移 | ①跑 `skill_sync.py --check` 看实际名单，**不信文档里的数字**（本技能曾长期写「6 个基础技能」，实际已 9 个，照文档判同步会遗漏 3 个）；②改完核对三个 profile 的 md5（默认端 ≠ 其他端 = 漏同步）；③查 `collect.py` 等自动检测脚本是否把自己的变更当成待审查信号（自己审自己 = 自指循环） |
 | 9 | **同步机制本身的覆盖盲区（2026-10-04 新增）** | 同步脚本实际扫哪些目录？**文档说的同步范围 ≠ 代码实际扫的范围** | `skill_sync.py` 只扫 `skills/` 目录（DEFAULT_SKILLS + PROFILES），**完全不扫 `plugins/`**——插件漂移对同步机制**结构性隐形**。实测 env-reminder 插件 profile-C 端比 default 端落后两个修复（md5 c2807e8b vs 7895d79a）而 `--check` 报「三方一致，无需同步」。审查任何声称「三端同步」的技能时：**先确认它在 `skills/` 还是 `plugins/`**，在 `plugins/` 的必须手动核对三端 md5，不能指望 sync 机制 |
 | 10 | **待审清单只覆盖近期变更，红线存量在清单外（2026-10-12 新增）** | env-reminder 的 pending 由 mtime 变化触发，只标记近期被改过的技能；红线类问题（明文凭据、危险命令）可能躺在一个多月没动过的技能目录里 | 清 pending 前后各跑一次**全库**凭据扫描（遍历全部 SKILL_ROOTS + 插件根，不限 pending 名单），别把「pending 清零」汇报成「全库无红线」——本轮最有价值的红线发现正是清单外技能目录里的明文 cookie |
-| 11 | **上游静默改写被当成我方变更（2026-10-12 新增）** | 上游同步/重装/解包会改文件 mtime 但不留「谁改的」标记；pending 机制只问「文件变了没」，不问「归不归我们管」→ 官方内置技能的每次上游同步都变成一条人工待审 | 三层分流：**归属判定**（grep `.bundled_manifest`，判不出按 fail-closed 当内置）→ **处置分流**（本地技能走原逻辑；内置技能只跑自动审查、无问题则静默记录，**不写 pending**）→ **提醒只报本地技能**。修在最上游的 collect.py 归属判定，不在下游 review_check 过滤——否则 `--status` 与便签数字会对不上。红线「技能必审查」不冲突：内置技能仍跑自动审查，只是不占人工待办位 |
+| 11 | **上游静默改写被当成我方变更（2026-10-12 新增）** | 上游同步/重装/解包会改文件 mtime 但不留「谁改的」标记；pending 机制只问「文件变了没」，不问「归不归我们管」→ 官方内置技能的每次上游同步都变成一条人工待审 | 三层分流：**归属判定**（grep `.bundled_manifest`，判不出按 fail-closed 当内置）→ **处置分流**（本地技能走原逻辑；内置技能只跑自动审查、无问题则静默记录，**不写 pending**）→ **提醒只报本地技能**。修在最上游的 collect.py 归属判定，不在下游 review_check 过滤——否则 `--status` 与便签数字会对不上。红线「技能必审查」不冲突：内置技能仍跑自动审查，只是不占人工待办位（本条与核心铁律/归属分流节/references §1-§6 四处同述，**权威定义=references/builtin-skills-disposition.md**，冲突以它为准） |
 | 12 | **frontmatter 与 changelog 各说各话（2026-10-12 新增）** | 注册表/changelog 声称「已补 version 字段」，实测 frontmatter 仍缺；正文标题带 v2.1 而 frontmatter 是 1.0.x——两处版本口径不一致 | 报「自动项全绿」不等于内容合规：对每个待审技能实读 frontmatter 首 10 行与正文标题里的版本号，三方（frontmatter / 正文标题 / 注册表）对齐才算过；正文标题不要内嵌版本号，只留特性描述 |
 | 13 | **清理成果与告警水位脱钩：删对了文件、删错了盘（2026-10-12 新增）** | NAS 容器里同一台物理机上有多块 btrfs 卷（系统盘 180G + 数据盘 932G）。在容器内 `du`+`rm` 删掉 1.578 GiB 探针产物，**`df` 一个数都没动**——删的文件落在一块水位健康的盘上，而告警读的是另一块物理盘的占用 | 清理前后各跑一次 `df -h /`，**两个数对不上就查挂载归属**（`findmnt -T <路径>` 看 SOURCE，同设备同子卷才算真的动到了告警盘），别把「目录变小」汇报成「水位下降」。若确认删的是另一块盘，如实说「已释放 X、但告警的盘水位不变」，再单独报那块盘上真正可动的大块。**同一台 NAS 上「目录可见」不等于「占告警盘的空间」**——判定口径只有挂载源，不是路径层级 |
 | 14 | **文档声明计数 vs 代码实测计数漂移（2026-10-15 新增）** | 文档/速查表/表头写「共 N 个」的子命令/条目/字段清单，与源码实际数量不一致——改代码时加了新项却漏同步清单，或清单本身漏录。典型：`nas-tool` 主分发 **34** 个 case 分支，速查表表头却写「33 子命令」（漏了 `reset`）；这类漂移不会报错、不影响运行，但让照文档操作的人**漏用或漏查** | 报「自动项全绿」不等于内容合规：对任何带「共 N 个/全部 N 项」字样的技能，**从源码反向数一遍**（`grep -oE '^\s{2}[a-z][a-z0-9\-]*\)'` 数 case 分支、`json.load` 数 JSON 数组长度、`grep -c '^|'` 数表格行），与文档声明值对齐。⚠️ 数之前先确认自己的正则**真能匹配到那段结构**——第一版正则只匹配到 2 个（匹配的是嵌套 case 而非主分发），差点据此误判「文档夸大」；换更宽的正则+扩大行窗口后才数出 34，**正则不匹配 ≠ 对象不存在**（同「跑通≠跑成功」家族） |
@@ -445,11 +474,13 @@ python3 /opt/data/scripts/review_check.py --status               # 待审查清�
 | 18 | **审查工具自身的并发写竞态（2026-10-16 新增）** | `review_check.py` 与 env-reminder 的 `collect.py` 都用 `save_json()`，且 tmp 名都写死 `path + ".tmp"`，两者都会写同一个 `/opt/data/state/skill_scan_state.json`——cron 采集（每 5 分钟）与人工 `--done` 撞在同一秒时，先完成的一方把 tmp 搬走，另一方 `os.replace` 抛 `FileNotFoundError`。现象极具误导：**pending 已清、日志已留痕，但命令退出码非 0 且扫描基线没更新**（很容易被读成「清完了、只是报个错」） | ①修法=tmp 名带 pid（`f"{path}.tmp.{os.getpid()}"`）+ `os.replace` 容错，已落地 `review_check.py`/`collect.py`，并用 3 线程 × 40 次并发写实测（0 异常、终值可解析、无残留 tmp）；②判据=审查工具报错先查 `state/*.tmp*` 残留与基线文件 mtime，别只看「pending 清了」；③同型风险=任何「固定 tmp 名 + `os.replace`」的自建脚本，多写者共用同一目标文件都会踩 |
 | 19 | **按技能名清 pending，会让「文档改动」替「执行体变更」背书（2026-10-16 新增，红线级）** | pending 只按技能名记（`{技能名: {ts}}`），不记「这条待审动没动执行体」；于是同一技能**先**有一次未审的**执行体**变更、**随后**又来一次只改文档的变更时，第二次走 `try_auto_review` → auto-done **按名字清 pending**，把那条执行体待审一并清掉——红线「执行体不可免审」在机制层被绕过。2026-10-16 实测发生：fnos-media-library-org 当日 `scripts/normalization_rules.json` 变更的 pending，被同技能 SKILL.md 文档变更的 auto-done 清掉（清掉 ≠ 审过） | ①修法（已落地 `collect.py`）：pending 记录加 `touched_scripts` 标记（只升不降），派发逻辑抽成纯函数 `decide_local_disposition()`——该技能已有执行体级 pending 时，仅文档变更也**必挂 pending、不调 auto-done**；单测 4 场景（动执行体必挂／已挂执行体时文档变更不 auto／无历史且快审过不挂／快审失败挂）全过。②判据=查 pending 时先看记录里有无 `touched_scripts: true`，别把「便签上 pending 没了」当成「执行体已审」。③同型风险=任何「按对象名清状态、不记来源」的机制（通知去重、队列完成标记）都可能被同类后续动作误清 |
 | 20 | **不可达兜底块里的未定义名（重构残留死代码）** | try 内已有 `if not x: raise` 且 except 每个分支都 return 时，try **之后**的同名兜底块永不执行；重构改名的变量常留在这种死块里（实测某 provider 插件 try 后兜底块引用 `len(models)`，而 `models` 在该函数内从未赋值）——今天是死代码，判据一改就是 NameError，把整条「本应优雅回落」的路径炸掉 | 两步判：①列 try 内的 raise 条件与 except 的各 return 分布，确认后续块不可达；②AST 收集该函数内赋值的 Name(Store) 集合，grep 块内每个标识符在不在集合内，不在即潜伏 NameError。确认不可达且语义已被 except 覆盖 ⇒ 删整块（别只改名修变量，死块留着就是下一颗雷）；若可达 ⇒ 按 G/S 维修并补失败注入测试 |
-| 21 | **「某 cron 会刷新 X」必须 grep 出真实写入者** | 文档/注释写「TTL 略短于每日检测 cron 的周期，保证快路径不断」，但那个 cron 写的可能是**另一个文件**（实测每日检测只写 state.json，快照唯一写入者是手动 discover，从无 cron 调度）⇒ 缓存/TTL 机制长期静默失效，症状只是「每次切换都慢」，没有任何报错 | 凡声称有机制刷新某文件：①`grep -rn '<文件名>' /opt/data/scripts/ ~/.hermes/scripts/` 列出全部写入者；②拿 `cron/jobs.json` 的 script 字段核它**真的被调度**；③对比文件实际 age 与 TTL。三步缺一即按「机制未落地」报，并指出文档那句写反/过时（X 维时间一致性） |
+| 21 | **「某 cron 会刷新 X」必须 grep 出真实写入者** | 文档/注释写「TTL 略短于每日检测 cron 的周期，保证快路径不断」，但那个 cron 写的可能是**另一个文件**（实测每日检测只写 state.json，快照唯一写入者是手动 discover，从无 cron 调度）⇒ 缓存/TTL 机制长期静默失效，症状只是「每次切换都慢」，没有任何报错 | 凡声称有机制刷新某文件：①`grep -rn '<文件名>' /opt/data/ ~/.hermes/scripts/ 2>/dev/null | grep -vE '/state/|/logs/'` 列出全部写入者（⚠️ 范围必须含核心区 /opt/data/*.py 顶层与 /opt/data/env_reminder/ 子目录，只搜服务区会漏 collect.py 类写入者=假阴性）；②拿 `cron/jobs.json` 的 script 字段核它**真的被调度**；③对比文件实际 age 与 TTL。三步缺一即按「机制未落地」报，并指出文档那句写反/过时（X 维时间一致性） |
 | 22 | **自建脱敏/扫描正则要用符号边界值测** | 凭据脱敏正则的字符类常漏符号（实测值以 `~` 开头时整条不命中）⇒ 该值原样穿过脱敏进入交付包，而包内 dependencies.md 正写着「本包不含明文凭据」= 假承诺；只验键名侧全被替换会以为成功了 | 改/审脱敏、凭据扫描类函数时，测试值必须覆盖以 `~ ! @ # $ % ^ & * ( ) + =` 等符号开头与内含符号的长随机串，逐类确认被替换；再核对同一份产物里「不含明文凭据」这类声明与实测一致——声明与实现不符按 D 维红线报（与自动项 #3「成对测试」同族：只验一半等于没验） |
 | 23 | **第三方 CLI 托管的运行时凭据躺在技能目录里** | 官方安装器维护的技能会把 token/配置写进技能目录（CLI 自己的 config.json）——它不属文档泄露，改它 = 弄坏 CLI，但会随 copytree 类的打包/同步路径外流；且它每次刷新 token 都改 mtime，把 pending 机制吵起来 | 分三层处置：①属 CLI 运行时状态 ⇒ 不动文件、不争论「该入加密库」，只报路径与「谁在写」；②查它会流去哪（打包脚本 copytree、三端同步白名单），确保没有通道带出本机；③该技能由上游安装器维护 ⇒ 按 exempt 判据（变更是否出自会话之手）处理 pending 噪声，加名前须主人点名 |
 | 24 | **缓存快路径把回退链死路径永久遮蔽** | 带缓存/TTL 的组件（provider 插件、探测脚本），回退路径自上线从未真正执行过——TTL 覆盖刷新周期时快路径恒命中，回退链里的死代码无任何报错长期潜伏。典型形态：移植函数时丢失的常量定义（NameError 被回退入口首段的宽 except 吞成 None）；探测路径残留旧代指纹（运行时已换代，旧定义在新闸门下必拒全判 dead）；回写留痕字段从未出现（缓存文件里只见过 cron 来源、从无现场回写痕迹）＝可发现的现成信号被放过 | ①凡带缓存的组件，审查必须强制真跑一次慢路径（清缓存/直调探测或回退入口），只验快路径等于没审回退链；②组件输出里区分快慢路径的留痕字段为空 ⇒ 先证伪「回退链正常」再谈缓存工作正常；③回退路径引用的模块级常量逐个 grep 定义处——引用存在 ≠ 定义存在，移植/重构常把定义留在旧文件里 |
 | 25 | **「已审已修」声明四点核验（记忆/便签注入的声明同样要核）** | 记忆、环境便签、changelog 自报「已审查、已修复、已升版」，但修复特征不在文件里＝修复未落盘。证据链四点缺一即定性未落盘：①磁盘 grep 修复特征（补的定义/改的调用点）②文件版本号与声明一致 ③skill_review.log 有对应 --done 留痕 ④三 profile state.db 会话消息检索得到执行痕迹；不得据声明继续引用该「已修」状态 | 四点核验后再追还原者：文件 mtime 新但内容与旧版逐字节一致（md5 同）＝被静默还原——对 mtime 的 epoch 时间窗检索三端会话消息定位写入者，检索不到＝外部通道（部署脚本/共享卷另一实例）在写；先找到写者并排除再重做修复，否则修完会被再次还原 |
+| 26 | **pending 首检 delta 不可回溯：复核对象是「现状」不是「当时」** | pending 的 ts 是**首次检出时间且不更新**（`append_pending` 用 `setdefault`，同键后续变更全部并入同一条、只升 touched_scripts）；扫描基线在检出时即刷新，触发时的旧内容无副本留存，文件再被删/移出监控树后**无法逐字节回溯当时改了什么** | 复核改走三步现状核：①现存文件对基线逐个 mtime+md5，先分运行态/内容差异（锁/缓存/探针标记=运行态，不算内容变更）；②删除类变更查各端归档目录（如 `.archive/`）逐文件 md5 对照（⚠️ 2026-11-05 修正：原文「`_removed_*`」经全盘搜证该机制在代码中不存在，属文档死引用；未来真引入删除检出机制须先改此处）——三端与归档一致＝动作一致且归档即回滚路径；③回溯不到就在 --done 备注与汇报里**如实写「首检 delta 不可回溯、现状已全量核实」**，禁止把「pending 清了」升格成「触发内容已查明」 |
+| 27 | **执行体文件的 cron 运行时写回（touched_scripts 假 pending 第三形态）** | 技能自身的运行时配置（scripts/config.json 类）被自家托管 cron 定期写回（队列状态/review_at 等时间戳落盘），mtime 周期性刷新 → 每轮采集都按执行体变更挂 touched_scripts pending，机制无法豁免、清完还会再挂 | 定源三查：①文件 mtime 与已知 cron 调度时刻对齐——写入点紧贴 cron 窗口、先于 pending 首检数分钟=强指纹；②grep 文件内容找运行态字段的时间痕迹（队列/日期戳），有=运行时写回；③现状 md5 对首检基线（基线检出时刷新，仅新条目带 md5；旧条目 md5=None 时内容级只能靠「mtime 无变化」佐证，如实标注证据强度）。定性运行态后 --done 备注写明 cron 触发源；若同技能另有真实内容变更（已审已登记），在备注里把两件事分开，别混在一条 pending 里。注册表对齐 warning 在双端分代技能上按代差解读（登记值=主审端最高版本，低代端为历史基线），不据此强升 |
 
 ## 优化原则（提速核心 + 稳定兜底）
 
